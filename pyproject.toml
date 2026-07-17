@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+[tool.pytest.ini_options]
+testpaths = ["apps/backend/tests", "services/data_pipeline/tests", "tests"]
+pythonpath = ["apps/backend", "services/data_pipeline/src"]
+addopts = "-q"

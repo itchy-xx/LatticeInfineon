@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lattice}
+      POSTGRES_USER: ${POSTGRES_USER:-lattice}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+    ports: ["5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build: {context: ., dockerfile: apps/backend/Dockerfile}
+    environment:
+      DATABASE_URL: postgresql+psycopg://lattice:${POSTGRES_PASSWORD:-local-development-only}@db:5432/${POSTGRES_DB:-lattice}
+      CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-5173}
+      MOCK_DATA_PATH: /workspace/data/mock/supply_chain_events.mock.json
+    ports: ["${BACKEND_PORT:-8000}:8000"]
+    volumes: ["./apps/backend:/workspace/apps/backend", "./data/mock:/workspace/data/mock:ro"]
+    depends_on:
+      db: {condition: service_healthy}
+  frontend:
+    build: {context: ., dockerfile: apps/frontend/Dockerfile}
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+    ports: ["${FRONTEND_PORT:-5173}:5173"]
+    volumes: ["./apps/frontend/src:/workspace/apps/frontend/src"]
+    depends_on: [backend]
+volumes:
+  postgres_data:

@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: Lattice Supply Chain API
+  version: 0.1.0
+  description: Generic bootstrap contract; update before binding real source fields.
+servers: [{url: /api/v1}]
+paths:
+  /health: {get: {operationId: health, responses: {'200': {description: Healthy}}}}
+  /overview: {get: {operationId: getOverview, responses: {'200': {description: Overview}}}}
+  /partners: {get: {operationId: listPartners, responses: {'200': {description: Partners}}}}
+  /shipments: {get: {operationId: listShipments, responses: {'200': {description: Shipments}}}}
+  /production-events: {get: {operationId: listProductionEvents, responses: {'200': {description: Production events}}}}
+  /alerts: {get: {operationId: listAlerts, responses: {'200': {description: Alerts}}}}

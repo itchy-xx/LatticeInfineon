@@ -1,0 +1,5 @@
+application: {name: lattice, environment: development}
+data_quality:
+  # Confirm thresholds and source precedence with data owners.
+  freshness_warning_hours: null
+  confidence_warning_threshold: null

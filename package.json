@@ -1,0 +1,1 @@
+{"name":"lattice-infineon","private":true,"workspaces":["apps/frontend"],"scripts":{"dev":"npm --workspace apps/frontend run dev","build":"npm --workspace apps/frontend run build","test":"npm --workspace apps/frontend run test","lint":"npm --workspace apps/frontend run lint","format":"prettier --write ."},"devDependencies":{"prettier":"^3.3.3"},"engines":{"node":">=20"}}

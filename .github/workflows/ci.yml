@@ -1,0 +1,19 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12', cache: pip}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20', cache: npm}
+      - run: pip install -r apps/backend/requirements-dev.txt -r services/data_pipeline/requirements.txt
+      - run: npm install
+      - run: ruff check apps/backend services/data_pipeline
+      - run: pytest
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: python scripts/check_contracts.py

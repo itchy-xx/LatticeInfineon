@@ -1,0 +1,2 @@
+import type{SupplyChainRecord}from'../../api/types';import{Panel}from'../../components/Panel';
+export function TrackingTable({items}:{items:SupplyChainRecord[]}){return <Panel title="Shipment & production tracking"><table><thead><tr><th>ID</th><th>Type</th><th>Status</th><th>Observed</th></tr></thead><tbody>{items.map(x=><tr key={x.id}><td>{x.id}</td><td>{x.record_type}</td><td>{x.status}</td><td>{new Date(x.source.observed_at).toLocaleString()}</td></tr>)}</tbody></table></Panel>}

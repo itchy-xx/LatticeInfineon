@@ -1,0 +1,6 @@
+[
+ {"id":"mock-partner-001","record_type":"partner","status":"active","attributes":{"display_name":"Mock Assembly Partner","partner_category":"assembly"},"source":{"source_system":"synthetic_fixture","observed_at":"2026-01-01T08:00:00Z","freshness_score":1,"confidence_score":1}},
+ {"id":"mock-shipment-001","record_type":"shipment","status":"in_transit","partner_id":"mock-partner-001","occurred_at":"2026-01-01T09:00:00Z","attributes":{"origin_label":"Mock Origin","destination_label":"Mock Destination"},"source":{"source_system":"synthetic_fixture","observed_at":"2026-01-01T09:05:00Z","freshness_score":1,"confidence_score":1}},
+ {"id":"mock-production-001","record_type":"production_event","status":"completed","partner_id":"mock-partner-001","occurred_at":"2026-01-01T07:00:00Z","attributes":{"event_label":"Mock processing step"},"source":{"source_system":"synthetic_fixture","observed_at":"2026-01-01T07:10:00Z","freshness_score":1,"confidence_score":1}},
+ {"id":"mock-alert-001","record_type":"alert","status":"open","partner_id":"mock-partner-001","occurred_at":"2026-01-01T10:00:00Z","attributes":{"title":"Mock hand-off delay","summary":"Synthetic exception for UI development only.","severity":"medium"},"source":{"source_system":"synthetic_fixture","observed_at":"2026-01-01T10:00:00Z","freshness_score":1,"confidence_score":1}}
+]
