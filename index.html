@@ -60,6 +60,15 @@ a:hover{color:#004a99;text-decoration:underline}
       </div>
     </div>
 
+    <sc-if value="{{simulationActive}}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;display:flex;align-items:center;gap:12px;padding:9px 24px;background:#1d1d1f;color:#fff;animation:slideIn .2s ease">
+        <div style="width:7px;height:7px;border-radius:50%;background:#ff9f0a;flex:none;animation:pulseDot 1.6s infinite"></div>
+        <div style="font-size:12.5px;font-weight:600;flex:1">Simulation mode: {{ simulationLabel }}</div>
+        <button onClick="{{ resetScenario }}" style="background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Reset</button>
+        <button onClick="{{ exitSimulation }}" style="background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Exit Simulation</button>
+      </div>
+    </sc-if>
+
     <sc-if value="{{isMapTab}}" hint-placeholder-val="{{ true }}">
       <div style="flex:1;display:flex;overflow:hidden">
         <div style="flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
@@ -220,7 +229,7 @@ a:hover{color:#004a99;text-decoration:underline}
                   <div style="background:#f5f5f7;border-radius:10px;padding:14px"><div style="font-size:11px;color:#8e8e93">Exposure</div><div style="font-size:19px;font-weight:700;margin-top:4px">€{{ curIncident.exposureEurFmt }}</div></div>
                   <div style="background:#f5f5f7;border-radius:10px;padding:14px"><div style="font-size:11px;color:#8e8e93">Time at risk</div><div style="font-size:19px;font-weight:700;margin-top:4px">{{ curIncident.exposureDays }} days</div></div>
                   <div style="background:#f5f5f7;border-radius:10px;padding:14px"><div style="font-size:11px;color:#8e8e93">Orders at risk</div><div style="font-size:19px;font-weight:700;margin-top:4px">{{ curIncident.ordersAtRisk }}</div></div>
-                  <div style="background:#f5f5f7;border-radius:10px;padding:14px"><div style="font-size:11px;color:#8e8e93">Customers</div><div style="font-size:19px;font-weight:700;margin-top:4px">{{ curIncident.customersAtRisk }}</div></div>
+                  <div style="background:#f5f5f7;border-radius:10px;padding:14px"><div style="font-size:11px;color:#8e8e93">Customers (est.)</div><div style="font-size:19px;font-weight:700;margin-top:4px">{{ curIncident.customersAtRisk }}</div></div>
                 </div>
                 <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#8e8e93;text-transform:uppercase;margin:22px 0 10px">Affected shipments</div>
                 <sc-for list="{{curIncident.affectedShipments}}" as="s" hint-placeholder-count="3">
@@ -541,6 +550,73 @@ a:hover{color:#004a99;text-decoration:underline}
         </sc-if>
       </div>
     </sc-if>
+
+    <sc-if value="{{isScenarioTab}}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow-y:auto;padding:26px 40px;max-width:820px;margin:0 auto;width:100%">
+        <div style="font-size:22px;font-weight:700;margin-bottom:4px">Run Scenario</div>
+        <div style="font-size:13px;color:#8e8e93;margin-bottom:20px">Select a disruption scenario, provide any required parameters, and run it against the optimizer. Results replace the Home map, incident panel and alert feed with real backend output.</div>
+
+        <sc-if value="{{scenarioListError}}" hint-placeholder-val="{{ '' }}">
+          <div style="background:#fdecea;border:1px solid #f4c7c3;color:#b3261e;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:16px">Could not load scenarios: {{ scenarioListError }}</div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+          <sc-for list="{{scenarioListView}}" as="sc" hint-placeholder-count="6">
+            <div onClick="{{ sc.select }}" style="background:#fff;border:1px solid {{ sc.borderColor }};border-radius:12px;padding:16px 18px;cursor:pointer">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div style="font-size:14px;font-weight:600">{{ sc.label }}</div>
+                <sc-if value="{{ sc.selected }}" hint-placeholder-val="{{ false }}"><div style="width:9px;height:9px;border-radius:50%;background:#1d1d1f;flex:none;margin-top:4px"></div></sc-if>
+              </div>
+              <div style="font-size:12.5px;color:#6e6e73;margin-top:6px;line-height:1.5">{{ sc.description }}</div>
+              <sc-if value="{{ sc.showSupplementaryNote }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11.5px;color:#b15b00;margin-top:8px">Supplementary analysis only — does not change route selection.</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{hasScenarioParams}}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #e5e5e7;border-radius:12px;padding:16px 18px;margin-bottom:20px;display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#8e8e93;text-transform:uppercase">Parameters</div>
+              <div style="font-size:11.5px;color:#8e8e93;margin-top:4px">Pre-filled with a real example from the dataset — edit any field before running.</div>
+            </div>
+            <sc-for list="{{scenarioParamRows}}" as="p" hint-placeholder-count="2">
+              <div>
+                <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">{{ p.label }}</div>
+                <sc-if value="{{ p.isHub }}" hint-placeholder-val="{{ false }}">
+                  <select value="{{ p.value }}" onChange="{{ p.setValue }}" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid #d2d2d7;font-size:12.5px;font-family:inherit;background:#fff">
+                    <option value="">Select a hub…</option>
+                    <sc-for list="{{ p.hubOptions }}" as="ho" hint-placeholder-count="3">
+                      <option value="{{ ho.id }}">{{ ho.label }}</option>
+                    </sc-for>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ p.isHubMulti }}" hint-placeholder-val="{{ false }}">
+                  <div style="max-height:180px;overflow-y:auto;border:1px solid #d2d2d7;border-radius:8px">
+                    <sc-for list="{{ p.hubRows }}" as="ho" hint-placeholder-count="3">
+                      <div onClick="{{ ho.toggle }}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid #f0f0f2;font-size:12.5px">
+                        <div style="width:16px;height:16px;border-radius:4px;border:1px solid #d2d2d7;background:{{ ho.checkBg }};display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:11px">{{ ho.checkMark }}</div>
+                        <div>{{ ho.label }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.isNumber }}" hint-placeholder-val="{{ false }}">
+                  <input type="number" value="{{ p.value }}" onChange="{{ p.setValue }}" min="{{ p.min }}" max="{{ p.max }}" step="{{ p.step }}" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid #d2d2d7;font-size:12.5px;font-family:inherit">
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{scenarioError}}" hint-placeholder-val="{{ '' }}">
+          <div style="background:#fdecea;border:1px solid #f4c7c3;color:#b3261e;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:16px">{{ scenarioError }}</div>
+        </sc-if>
+
+        <button onClick="{{ runScenarioNow }}" style="{{ scenarioRunButtonStyle }}">{{ scenarioRunButtonLabel }}</button>
+      </div>
+    </sc-if>
   </div>
 </sc-if>
 
@@ -551,6 +627,7 @@ a:hover{color:#004a99;text-decoration:underline}
       <div style="width:1px;height:20px;background:#e5e5e7"></div>
       <div style="display:flex;gap:4px;flex:1">
         <button onClick="{{ goCustOrders }}" style="{{ custOrdersTabStyle }}">My Orders</button>
+        <button onClick="{{ goCustChats }}" style="{{ custChatsTabStyle }}">Chats<sc-if value="{{custChatsUnreadCount}}" hint-placeholder-val="{{ 0 }}"> ({{ custChatsUnreadCount }})</sc-if></button>
         <button onClick="{{ goCustSettings }}" style="{{ custSettingsTabStyle }}">Settings</button>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
@@ -593,36 +670,6 @@ a:hover{color:#004a99;text-decoration:underline}
             </sc-for>
           </div>
         </div>
-        <div style="width:25%;flex:none;background:#fff;border-left:1px solid #e5e5e7;overflow-y:auto;display:flex;flex-direction:column">
-          <div style="padding:18px 20px 12px;border-bottom:1px solid #e5e5e7">
-            <div style="font-size:15px;font-weight:700">Chat</div>
-          </div>
-          <sc-for list="{{customerChatsView}}" as="chat" hint-placeholder-count="3">
-            <div style="border-bottom:1px solid #f0f0f2">
-              <div onClick="{{ chat.toggle }}" style="padding:14px 20px;cursor:pointer;position:relative">
-                <div style="font-size:12.5px;font-weight:600;padding-right:16px">{{ chat.order }}</div>
-                <sc-if value="{{chat.showPreview}}" hint-placeholder-val="{{ true }}">
-                  <div style="font-size:12px;color:#6e6e73;margin-top:6px;line-height:1.45;padding-right:16px">{{ chat.preview }}</div>
-                </sc-if>
-                <sc-if value="{{chat.unread}}" hint-placeholder-val="{{ false }}">
-                  <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:#0071e3"></div>
-                </sc-if>
-              </div>
-              <sc-if value="{{chat.isOpen}}" hint-placeholder-val="{{ false }}">
-                <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:8px">
-                  <sc-for list="{{chat.thread}}" as="m" hint-placeholder-count="1">
-                    <div style="align-self:{{ m.align }};max-width:90%;background:{{ m.bg }};color:{{ m.color }};border-radius:10px;padding:8px 11px">
-                      <div style="font-size:12px;line-height:1.5">{{ m.text }}</div>
-                      <div style="font-size:10px;margin-top:4px;opacity:.6">{{ m.time }}</div>
-                    </div>
-                  </sc-for>
-                  <textarea value="{{ chat.replyDraft }}" onChange="{{ chat.setReply }}" placeholder="Reply to Infineon…" style="width:100%;height:56px;resize:none;border:1px solid #d2d2d7;border-radius:8px;padding:8px;font-size:12px;font-family:inherit"></textarea>
-                  <button onClick="{{ chat.sendReply }}" style="align-self:flex-end;background:#1d1d1f;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit">Send</button>
-                </div>
-              </sc-if>
-            </div>
-          </sc-for>
-        </div>
         <sc-if value="{{orderDrawerOpen}}" hint-placeholder-val="{{ false }}">
           <div style="position:fixed;top:56px;right:0;bottom:0;width:420px;background:#fff;border-left:1px solid #e5e5e7;display:flex;flex-direction:column;animation:slideIn .25s ease;overflow-y:auto;z-index:5">
             <div style="padding:20px;border-bottom:1px solid #e5e5e7;display:flex;justify-content:space-between;align-items:flex-start">
@@ -657,14 +704,7 @@ a:hover{color:#004a99;text-decoration:underline}
               </div>
               <sc-if value="{{curOrder.canMessage}}" hint-placeholder-val="{{ false }}">
                 <div style="margin-top:20px;padding-top:18px;border-top:1px solid #e5e5e7">
-                  <div style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#8e8e93;text-transform:uppercase;margin-bottom:8px">Send Infineon a message</div>
-                  <textarea value="{{ orderMsgDraft }}" onChange="{{ setOrderMsgDraft }}" placeholder="Ask a question about this order…" style="width:100%;height:70px;resize:none;border:1px solid #d2d2d7;border-radius:8px;padding:10px;font-size:12.5px;font-family:inherit"></textarea>
-                  <div style="display:flex;justify-content:flex-end;margin-top:8px">
-                    <button onClick="{{ sendOrderMsg }}" style="background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Send</button>
-                  </div>
-                  <sc-if value="{{orderMsgSent}}" hint-placeholder-val="{{ false }}">
-                    <div style="margin-top:8px;font-size:12px;color:#1e6b28">Message sent — check Chats with Infineon.</div>
-                  </sc-if>
+                  <button onClick="{{ goToOrderChat }}" style="width:100%;background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:11px 0;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">{{ curOrder.chatButtonLabel }}</button>
                 </div>
               </sc-if>
             </div>
@@ -691,6 +731,79 @@ a:hover{color:#004a99;text-decoration:underline}
           </sc-for>
         </div>
         <button onClick="{{ saveNotifPrefs }}" style="margin-top:22px;background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Save preferences</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{custTabChats}}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;overflow:hidden">
+        <div style="flex:1;overflow-y:auto;padding:26px 40px">
+          <div style="font-size:22px;font-weight:700;margin-bottom:4px">Chats</div>
+          <div style="font-size:13px;color:#8e8e93;margin-bottom:20px">Every conversation with Infineon about your orders, grouped the same way as My Orders.</div>
+
+          <div style="font-size: 14px; font-weight: 700; color: #6e6e73; text-transform: none; letter-spacing: .04em; margin-bottom: 10px">In progress</div>
+          <div style="display:flex;flex-direction:column;gap:1px;background:#e5e5e7;border:1px solid #e5e5e7;border-radius:12px;overflow:hidden;margin-bottom:24px">
+            <sc-for list="{{chatsInProgressView}}" as="chat" hint-placeholder-count="2">
+              <div onClick="{{ chat.open }}" style="background:#fff;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative">
+                <div style="flex:1">
+                  <div style="font-size:13.5px;font-weight:600">{{ chat.order }}</div>
+                  <div style="font-size:12.5px;color:#6e6e73;margin-top:4px;line-height:1.4">{{ chat.preview }}</div>
+                </div>
+                <span style="background:{{ chat.statusBg }};color:{{ chat.statusColor }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;flex:none">{{ chat.status }}</span>
+                <sc-if value="{{chat.unread}}" hint-placeholder-val="{{ false }}">
+                  <div style="width:8px;height:8px;border-radius:50%;background:#0071e3;flex:none"></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-size: 14px; font-weight: 700; color: #6e6e73; text-transform: none; letter-spacing: .04em; margin-bottom: 10px">Completed</div>
+          <div style="display:flex;flex-direction:column;gap:1px;background:#e5e5e7;border:1px solid #e5e5e7;border-radius:12px;overflow:hidden">
+            <sc-for list="{{chatsCompletedView}}" as="chat" hint-placeholder-count="1">
+              <div onClick="{{ chat.open }}" style="background:#fff;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative">
+                <div style="flex:1">
+                  <div style="font-size:13.5px;font-weight:600">{{ chat.order }}</div>
+                  <div style="font-size:12.5px;color:#6e6e73;margin-top:4px;line-height:1.4">{{ chat.preview }}</div>
+                </div>
+                <span style="background:{{ chat.statusBg }};color:{{ chat.statusColor }};font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;flex:none">{{ chat.status }}</span>
+                <sc-if value="{{chat.unread}}" hint-placeholder-val="{{ false }}">
+                  <div style="width:8px;height:8px;border-radius:50%;background:#0071e3;flex:none"></div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{chatDrawerOpen}}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;top:56px;right:0;bottom:0;width:420px;background:#fff;border-left:1px solid #e5e5e7;display:flex;flex-direction:column;animation:slideIn .25s ease;overflow-y:auto;z-index:5">
+            <div style="padding:20px;border-bottom:1px solid #e5e5e7;display:flex;justify-content:space-between;align-items:flex-start">
+              <div>
+                <div style="font-size:16px;font-weight:700">{{ curChatOrder.id }}</div>
+                <div style="font-size:12.5px;color:#8e8e93;margin-top:3px">{{ curChatOrder.material }} · {{ curChatOrder.qtyFmt }} units</div>
+              </div>
+              <button onClick="{{ closeChatDrawer }}" style="background:#f5f5f7;border:none;border-radius:7px;width:26px;height:26px;font-size:13px;cursor:pointer">✕</button>
+            </div>
+            <div style="padding:20px;flex:1;display:flex;flex-direction:column">
+              <sc-if value="{{curChatOrder.hasChat}}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+                  <sc-for list="{{curChatOrder.chatThread}}" as="m" hint-placeholder-count="1">
+                    <div style="align-self:{{ m.align }};max-width:90%;background:{{ m.bg }};color:{{ m.color }};border-radius:10px;padding:8px 11px">
+                      <div style="font-size:12px;line-height:1.5">{{ m.text }}</div>
+                      <div style="font-size:10px;margin-top:4px;opacity:.6">{{ m.time }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{curChatOrder.hasChatNot}}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12.5px;color:#8e8e93;margin-bottom:16px">No messages yet — send one below to start the conversation.</div>
+              </sc-if>
+              <div style="flex:1"></div>
+              <textarea value="{{ orderMsgDraft }}" onChange="{{ setOrderMsgDraft }}" placeholder="Ask a question about this order…" style="width:100%;height:70px;resize:none;border:1px solid #d2d2d7;border-radius:8px;padding:10px;font-size:12.5px;font-family:inherit"></textarea>
+              <div style="display:flex;justify-content:flex-end;margin-top:8px">
+                <button onClick="{{ sendOrderMsg }}" style="background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Send</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
       </div>
     </sc-if>
   </div>
@@ -742,7 +855,7 @@ a:hover{color:#004a99;text-decoration:underline}
               <path d="M -2,-2.4 L 1.6,0 L -2,2.4" fill="none" stroke="{{ c.color }}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" transform="{{ c.transform }}"></path>
             </sc-for>
             <sc-for list="{{partnerHubsFiltered}}" as="hub" hint-placeholder-count="0">
-              <g>
+              <g opacity="{{ hub.opacity }}">
                 <circle cx="{{ hub.x }}" cy="{{ hub.y }}" r="{{ hub.r }}" fill="{{ hub.color }}" stroke="{{ hub.stroke }}" stroke-width="1.5" style="{{ hub.pulseStyle }}">
                   <title>{{ hub.hoverLabel }}</title>
                 </circle>
@@ -984,9 +1097,19 @@ class Component extends DCLogic {
     custChatOpenId: null,
     custChatReplies: {},
     custChatRead: {},
+    chatDrawerOrderId: null,
     orderMsgDraft: '',
     orderMsgSent: false,
     adHocChats: {},
+    scenarioList: [],
+    scenarioListError: null,
+    selectedScenarioId: null,
+    scenarioParams: {},
+    scenarioRunning: false,
+    scenarioError: null,
+    scenarioRun: null,
+    backendHubs: [],
+    backendHubsError: null,
   };
 
   componentDidMount() {
@@ -998,6 +1121,18 @@ class Component extends DCLogic {
         tickets: mod.TICKETS.map(t => ({ ...t, messages: t.messages.map(m => ({ ...m })), dataApproved: false })),
         auditLog: mod.AUDIT_LOG.map(a => ({ ...a })),
       });
+    });
+    import('./api-client.js').then(mod => {
+      this.api = mod;
+      this.api.fetchScenarios()
+        .then(list => this.setState({ scenarioList: list, scenarioListError: null }))
+        .catch(err => this.setState({ scenarioListError: err.message || 'Could not load scenarios from the backend.' }));
+      // Real hub list from the workbook (Hub_Constraints) -- backs the hub-selection
+      // parameter controls on Run Scenario, so options are never limited to (or hardcoded
+      // from) the small illustrative set of hubs data.js draws on the map.
+      this.api.fetchHubs(false)
+        .then(list => this.setState({ backendHubs: list, backendHubsError: null }))
+        .catch(err => this.setState({ backendHubsError: err.message || 'Could not load hubs from the backend.' }));
     });
   }
 
@@ -1022,7 +1157,7 @@ class Component extends DCLogic {
       loginAs_staff: () => this.setState({ view: 'staff' }),
       loginAs_partner: () => this.setState({ view: 'partner' }),
       loginAs_customer: () => this.setState({ view: 'customer' }),
-      logout: () => this.setState({ view: 'login', drawer: null, ticketDrawerId: null, selectedOrderId: null }),
+      logout: () => this.setState({ view: 'login', drawer: null, ticketDrawerId: null, selectedOrderId: null, chatDrawerOrderId: null }),
     };
 
     const isStaff = s.view === 'staff';
@@ -1033,6 +1168,7 @@ class Component extends DCLogic {
     const tabDefs = [
       ['map', 'Home'], ['alerts', 'Alert Feed'], ['tickets', 'Partner Tickets'],
       ['approvals', 'Approvals & Audit'], ['comms', 'Customer Communication'],
+      ['scenario', 'Run Scenario'],
     ];
     const tabBtnStyle = (active) => `background:${active ? '#1d1d1f' : 'transparent'};color:${active ? '#fff' : '#3a3a3c'};border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit`;
     const staffTabs = tabDefs.map(([id, label]) => ({ label, style: tabBtnStyle(s.staffTab === id), go: () => this.setState({ staffTab: id }) }));
@@ -1050,11 +1186,16 @@ class Component extends DCLogic {
     const focusedEdge = focusedOrder ? d.EDGES.find(e => e.family === focusedOrder.material && hubsById[e.from] && hubsById[e.to]) : null;
     const focusedHubIds = focusedEdge ? new Set([focusedEdge.from, focusedEdge.to]) : null;
     const stageColor = { FE: '#5ac8fa', Backend: '#8e8e93', OSAT: '#c7c7cc', SIFO: '#ffffff' };
+    // Home map disruption state is driven ONLY by a live scenario run now, never by data.js's
+    // old static disruption/reduction mock fields -- Home must show every route working
+    // normally until a real scenario is run, then reflect real backend-affected hubs only.
+    const scenarioHubIds = s.scenarioRun ? new Set(s.scenarioRun.affectedHubs.map(h => h.hubId)) : null;
     const projected = d.HUBS.map(h => {
       const p = d.project(h.lat, h.lon);
-      const isDisrupted = h.disruption && h.disruption !== 'None';
+      const scenarioDisrupted = scenarioHubIds ? scenarioHubIds.has(h.id) : false;
+      const isDisrupted = scenarioDisrupted;
       const r = Math.max(6, Math.min(15, Math.sqrt(h.capacity) / 20));
-      return { ...h, x: p.x, y: p.y, r, isDisrupted, color: isDisrupted ? '#e2001a' : stageColor[h.stage], stroke: isDisrupted ? '#ff8a80' : 'rgba(255,255,255,.35)' };
+      return { ...h, x: p.x, y: p.y, r, isDisrupted, scenarioDisrupted, color: isDisrupted ? '#e2001a' : stageColor[h.stage], stroke: isDisrupted ? '#ff8a80' : 'rgba(255,255,255,.35)' };
     });
     const visibleHubsAll = projected.filter(h => s.stageOn[h.stage] && (s.clusterFilter === 'All regions' || h.cluster === s.clusterFilter) && (!s.disruptedOnly || h.isDisrupted) && (!focusedHubIds || focusedHubIds.has(h.id)));
     const visibleIds = new Set(visibleHubsAll.map(h => h.id));
@@ -1067,7 +1208,7 @@ class Component extends DCLogic {
       pulseStyle: showGlow ? 'animation:pulseRed 2s infinite' : '',
       openDrawer: () => this.openIncidentByHub(h.id),
       utilPct: Math.round(h.util * 100),
-      statusLabel: h.isDisrupted ? h.disruption : 'Normal',
+      statusLabel: h.scenarioDisrupted ? 'Scenario simulation' : (h.isDisrupted ? h.disruption : 'Normal'),
       statusBg: h.isDisrupted ? '#fdecea' : '#eafaea', statusColor: h.isDisrupted ? '#b3261e' : '#1e6b28',
       rowCursor: h.isDisrupted ? 'pointer' : 'default',
       rowClick: h.isDisrupted ? () => this.openIncidentByHub(h.id) : () => {},
@@ -1137,7 +1278,7 @@ class Component extends DCLogic {
 
     const drawerVals = curIncident ? {
       drawerOpen: true,
-      curIncident: { ...curIncident, exposureEurFmt: this.fmt(curIncident.exposureEur), trace: curIncident.trace.map((t, i) => ({ ...t, hasLine: i < curIncident.trace.length - 1 })), optionsView, paretoPoints },
+      curIncident: { ...curIncident, exposureEurFmt: curIncident.exposureEur == null ? 'n/a' : this.fmt(curIncident.exposureEur), trace: curIncident.trace.map((t, i) => ({ ...t, hasLine: i < curIncident.trace.length - 1 })), optionsView, paretoPoints },
       incidentTabsList, incTabOverview: s.incidentTab === 'overview', incTabTrace: s.incidentTab === 'trace', incTabOptions: s.incidentTab === 'options',
       compareOpen: !!s.compareOpen, openCompare: () => this.setState({ compareOpen: true }), closeCompare: () => this.setState({ compareOpen: false }), stopProp: (e) => e.stopPropagation(),
       incidentUnresolved, incidentResolvedBanner: !!chosenOptId,
@@ -1151,7 +1292,7 @@ class Component extends DCLogic {
     const sevColor = { Critical: '#e2001a', Medium: '#ff9f0a', Low: '#8e8e93' };
     const mutedCount = s.alerts.filter(a => a.muted).length;
     const alertsView = s.alerts.map(a => ({
-      ...a, sevColor: sevColor[a.severity], exposureFmt: this.fmt(a.exposureEur),
+      ...a, sevColor: sevColor[a.severity], exposureFmt: a.exposureEur == null ? 'n/a' : this.fmt(a.exposureEur),
       rowOpacity: a.muted ? 0.55 : 1, muteTrackBg: a.muted ? '#1d1d1f' : '#d2d2d7', muteKnobLeft: a.muted ? '14px' : '2px',
       muteLabel: a.muted ? 'Muted' : 'Mute',
       toggleMute: () => this.setState({ alerts: s.alerts.map(x => x.id === a.id ? { ...x, muted: !x.muted } : x) }),
@@ -1184,7 +1325,7 @@ class Component extends DCLogic {
       const draft = s.commsEdits[c.id] ?? c.draft;
       return { ...c, draft, status, statusBg: st.bg, statusColor: st.color, isPending: status !== 'Approved',
         draftPreview: draft.length > 110 ? draft.slice(0, 110) + '…' : draft,
-        open: () => this.setState({ commsDrawerId: c.id }) };
+        open: () => this.setState({ commsDrawerId: c.id, custChatOpenId: null }) };
     });
     const staffAdHocView = Object.entries(s.adHocChats).filter(([orderId]) => !new Set(d.COMMS_DRAFTS.map(c => c.order)).has(orderId)).map(([orderId, thread]) => {
       const order = d.ORDERS.find(o => o.id === orderId);
@@ -1195,7 +1336,7 @@ class Component extends DCLogic {
         preview: thread[thread.length - 1].text.length > 90 ? thread[thread.length - 1].text.slice(0, 90) + '…' : thread[thread.length - 1].text,
         unread: s.custChatOpenId !== chatId, isOpen: s.custChatOpenId === chatId, showPreview: s.custChatOpenId !== chatId,
         thread: thread.map(m => ({ ...m, align: m.from === 'staff' ? 'flex-end' : 'flex-start', bg: m.from === 'staff' ? '#1d1d1f' : '#f5f5f7', color: m.from === 'staff' ? '#fff' : '#1d1d1f' })),
-        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === chatId ? null : chatId }),
+        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === chatId ? null : chatId, commsDrawerId: null }),
         replyDraft: s.custChatDraftText && s.custChatOpenId === chatId ? s.custChatDraftText : '', setReply: (e) => this.setState({ custChatDraftText: e.target.value }),
         sendReply: () => {
           const text = (s.custChatDraftText || '').trim();
@@ -1214,7 +1355,7 @@ class Component extends DCLogic {
         id: chatId, customer: c.customer, order: c.order, status: c.status, statusBg: c.statusBg, statusColor: c.statusColor,
         preview: c.draft.length > 90 ? c.draft.slice(0, 90) + '…' : c.draft,
         unread: s.custChatOpenId !== chatId, isOpen: s.custChatOpenId === chatId, showPreview: s.custChatOpenId !== chatId, thread,
-        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === chatId ? null : chatId }),
+        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === chatId ? null : chatId, commsDrawerId: null }),
         replyDraft: s.custChatDraftText && s.custChatOpenId === chatId ? s.custChatDraftText : '', setReply: (e) => this.setState({ custChatDraftText: e.target.value }),
         sendReply: () => {
           const text = (s.custChatDraftText || '').trim();
@@ -1236,6 +1377,47 @@ class Component extends DCLogic {
       setDraft: (e) => this.setState({ commsEdits: { ...s.commsEdits, [curCommsRaw.id]: e.target.value } }),
       approve: () => { this.setState({ commsStatus: { ...s.commsStatus, [curCommsRaw.id]: 'Approved' } }); this.showToast('Message approved and sent to customer.'); },
     } : {};
+
+    // ---------- RUN SCENARIO ----------
+    // Real hub options come from the backend (Hub_Constraints via GET /api/v1/hubs), never
+    // from data.js's small illustrative map set. A hub without a map marker (not one of
+    // data.js's ~13 demo hubs) is still fully selectable and will run for real -- it just
+    // won't get a marker on the small illustrative map, which is noted in its label.
+    const mapHubIds = new Set(d.HUBS.map(h => h.id));
+    const hubOptionsFor = (source) => s.backendHubs
+      .filter(h => source !== 'cold_chain_capable_hubs' || h.coldChainAvailable)
+      .map(h => ({
+        id: h.hubId, hasMarker: mapHubIds.has(h.hubId),
+        label: `${h.hubId} — ${h.city}, ${h.country}` + (mapHubIds.has(h.hubId) ? '' : ' (no map marker)'),
+      }));
+    const scenarioListView = s.scenarioList.map(sc => ({
+      ...sc, selected: s.selectedScenarioId === sc.id,
+      borderColor: s.selectedScenarioId === sc.id ? '#1d1d1f' : '#e5e5e7',
+      showSupplementaryNote: sc.implementationStatus === 'supplementary_only',
+      select: () => this.selectScenario(sc.id),
+    }));
+    const selectedScenarioDef = s.scenarioList.find(x => x.id === s.selectedScenarioId) || null;
+    const scenarioParamRows = (selectedScenarioDef ? selectedScenarioDef.parameterSchema : []).map(p => {
+      const selectedHubIds = s.scenarioParams[p.name] || [];
+      const hubOptions = hubOptionsFor(p.source);
+      return {
+        ...p,
+        isHub: p.type === 'hub', isHubMulti: p.type === 'hub_multi', isNumber: p.type === 'number',
+        hubOptions,
+        value: s.scenarioParams[p.name] ?? '',
+        setValue: (e) => this.setScenarioParam(p.name, e.target.value),
+        hubRows: hubOptions.map(ho => {
+          const isSelected = selectedHubIds.includes(ho.id);
+          return {
+            ...ho, checkBg: isSelected ? '#1d1d1f' : '#fff', checkMark: isSelected ? '✓' : '',
+            toggle: () => this.setScenarioParam(p.name, isSelected ? selectedHubIds.filter(x => x !== ho.id) : [...selectedHubIds, ho.id]),
+          };
+        }),
+      };
+    });
+    const scenarioRunButtonDisabled = s.scenarioRunning || !s.selectedScenarioId;
+    const scenarioRunButtonStyle = `width:100%;background:${scenarioRunButtonDisabled ? '#d2d2d7' : '#1d1d1f'};color:#fff;border:none;border-radius:8px;padding:12px 0;font-size:13.5px;font-weight:600;cursor:${scenarioRunButtonDisabled ? 'default' : 'pointer'};font-family:inherit`;
+    const activeScenarioDef = s.scenarioRun ? s.scenarioList.find(x => x.id === s.scenarioRun.scenario.id) : null;
 
     // ---------- STAFF ORDERS (mirrors map filters) ----------
     const custStatusColorAll = { 'On track': '#eafaea', 'At risk': '#fff4e5', 'Disrupted': '#fdecea' };
@@ -1278,18 +1460,10 @@ class Component extends DCLogic {
       closeHomeOrder: () => this.setState({ homeOrderDrawerId: null }),
     } : { homeOrderDrawerOpen: false, curHomeOrder: {}, closeHomeOrder: () => {} };
 
-    // ---------- CUSTOMER ----------
-    const custStatusColor = { 'On track': '#34c759', 'At risk': '#ff9f0a', 'Disrupted': '#e2001a' };
-    const myOrders = d.ORDERS.filter(o => o.customer === 'Automotive Tier-1 (DE)');
-    const searchQ = s.orderSearch.trim().toLowerCase();
-    const myOrdersFiltered = searchQ ? myOrders.filter(o => o.id.toLowerCase().includes(searchQ) || o.material.toLowerCase().includes(searchQ)) : myOrders;
-    const ordersView = myOrdersFiltered.map(o => ({ ...o, statusColor: custStatusColor[o.status], qtyFmt: this.fmt(o.qty), etaChanged: o.originalEta !== o.updatedEta, open: () => this.setState({ selectedOrderId: o.id }) }));
-    const selOrder = s.selectedOrderId ? myOrders.find(o => o.id === s.selectedOrderId) : null;
-    const inProgressOrdersView = ordersView.filter(o => o.status !== 'Completed');
-    const completedOrdersView = ordersView.filter(o => o.status === 'Completed');
-    const custOrderDrawer = selOrder ? { orderDrawerOpen: true, curOrder: { ...selOrder, statusColor: selOrder.status === 'Completed' ? '#8e8e93' : custStatusColor[selOrder.status], qtyFmt: this.fmt(selOrder.qty), hasIssue: selOrder.status !== 'On track' && selOrder.status !== 'Completed', canMessage: selOrder.status !== 'Completed', ...laneFor(selOrder.material) }, closeOrder: () => this.setState({ selectedOrderId: null, orderMsgDraft: '', orderMsgSent: false }) } : { orderDrawerOpen: false, curOrder: {}, closeOrder: () => {} };
-
     // ---------- CUSTOMER CHATS ----------
+    // Computed before the order drawer below so it can embed each order's real conversation
+    // directly in the same sidebar (order details on top, chat underneath), replacing the old
+    // permanent always-open Chat column.
     const chatStatusStyle = (status) => status === 'Approved' ? { bg: '#eafaea', color: '#1e6b28' } : { bg: '#fff4e5', color: '#b15b00' };
     const commsOrderIds = new Set(d.COMMS_DRAFTS.map(c => c.order));
     const adHocChatsView = Object.entries(s.adHocChats).filter(([orderId]) => !commsOrderIds.has(orderId)).map(([orderId, thread]) => {
@@ -1297,11 +1471,9 @@ class Component extends DCLogic {
       return {
         id: 'adhoc-' + orderId, order: orderId, status: 'Sent', statusBg: '#eef4fb', statusColor: '#0071e3',
         preview: thread[thread.length - 1].text.length > 90 ? thread[thread.length - 1].text.slice(0, 90) + '…' : thread[thread.length - 1].text,
-        unread: false, isOpen: s.custChatOpenId === 'adhoc-' + orderId,
-        showPreview: s.custChatOpenId !== 'adhoc-' + orderId,
+        unread: false,
         thread: thread.map(m => ({ ...m, align: m.from === 'staff' ? 'flex-start' : 'flex-end', bg: m.from === 'staff' ? '#f5f5f7' : '#1d1d1f', color: m.from === 'staff' ? '#1d1d1f' : '#fff' })),
-        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === 'adhoc-' + orderId ? null : 'adhoc-' + orderId }),
-        replyDraft: '', setReply: () => {}, sendReply: () => {},
+        open: () => this.setState({ chatDrawerOrderId: orderId, selectedOrderId: null }),
       };
     });
     const customerChatsView = [...d.COMMS_DRAFTS.filter(c => c.customer === 'Automotive Tier-1 (DE)').map(c => {
@@ -1312,32 +1484,82 @@ class Component extends DCLogic {
       return {
         id: c.id, order: c.order, status: c.status, statusBg: st.bg, statusColor: st.color,
         preview: c.draft.length > 90 ? c.draft.slice(0, 90) + '…' : c.draft,
-        unread: s.custChatOpenId !== c.id && !s.custChatRead[c.id],
-        isOpen: s.custChatOpenId === c.id, showPreview: s.custChatOpenId !== c.id, thread,
-        toggle: () => this.setState({ custChatOpenId: s.custChatOpenId === c.id ? null : c.id, custChatRead: { ...s.custChatRead, [c.id]: true } }),
-        replyDraft: s.custChatDraftText && s.custChatOpenId === c.id ? s.custChatDraftText : '',
-        setReply: (e) => this.setState({ custChatDraftText: e.target.value }),
-        sendReply: () => {
-          const text = (s.custChatDraftText || '').trim();
-          if (!text) return;
-          const msg = { from: 'customer', text, time: new Date().toISOString().slice(0, 16).replace('T', ' ') };
-          this.setState({ custChatReplies: { ...s.custChatReplies, [c.id]: [...(s.custChatReplies[c.id] || []), msg] }, custChatDraftText: '' });
-        },
+        unread: !s.custChatRead[c.id], thread,
+        open: () => this.setState({ chatDrawerOrderId: c.order, selectedOrderId: null, custChatRead: { ...s.custChatRead, [c.id]: true } }),
       };
     }), ...adHocChatsView];
+    const allCustomerChats = [...customerChatsView, ...adHocChatsView];
+    const custChatsUnreadCount = allCustomerChats.filter(c => c.unread).length;
+
+    // ---------- CUSTOMER ----------
+    const custStatusColor = { 'On track': '#34c759', 'At risk': '#ff9f0a', 'Disrupted': '#e2001a' };
+    const myOrders = d.ORDERS.filter(o => o.customer === 'Automotive Tier-1 (DE)');
+    const searchQ = s.orderSearch.trim().toLowerCase();
+    const myOrdersFiltered = searchQ ? myOrders.filter(o => o.id.toLowerCase().includes(searchQ) || o.material.toLowerCase().includes(searchQ)) : myOrders;
+    const ordersView = myOrdersFiltered.map(o => ({ ...o, statusColor: custStatusColor[o.status], qtyFmt: this.fmt(o.qty), etaChanged: o.originalEta !== o.updatedEta, open: () => this.setState({ selectedOrderId: o.id, chatDrawerOrderId: null }) }));
+    const selOrder = s.selectedOrderId ? myOrders.find(o => o.id === s.selectedOrderId) : null;
+    const inProgressOrdersView = ordersView.filter(o => o.status !== 'Completed');
+    const completedOrdersView = ordersView.filter(o => o.status === 'Completed');
+    // Order drawer = order details + a single button to the dedicated chat drawer (chats
+    // live entirely in their own drawer/tab now, not inline here).
+    const selOrderChat = selOrder ? allCustomerChats.find(c => c.order === selOrder.id) : null;
+    const selOrderHasChat = !!(selOrderChat && selOrderChat.thread.length);
+    const custOrderDrawer = selOrder ? {
+      orderDrawerOpen: true,
+      curOrder: {
+        ...selOrder, statusColor: selOrder.status === 'Completed' ? '#8e8e93' : custStatusColor[selOrder.status],
+        qtyFmt: this.fmt(selOrder.qty), hasIssue: selOrder.status !== 'On track' && selOrder.status !== 'Completed',
+        canMessage: selOrder.status !== 'Completed', ...laneFor(selOrder.material),
+        chatButtonLabel: selOrderHasChat ? 'Go to Chat' : 'Start Chat with Infineon',
+      },
+      closeOrder: () => this.setState({ selectedOrderId: null, orderMsgDraft: '', orderMsgSent: false }),
+      goToOrderChat: () => this.setState({ selectedOrderId: null, customerTab: 'chats', chatDrawerOrderId: selOrder.id }),
+    } : { orderDrawerOpen: false, curOrder: {}, closeOrder: () => {}, goToOrderChat: () => {} };
+
+    // Chats tab: grouped In progress / Completed the SAME way as My Orders (by the linked
+    // order's own status), so the two lists stay consistent with each other.
+    const myOrdersById = Object.fromEntries(myOrders.map(o => [o.id, o]));
+    const chatsInProgressView = allCustomerChats.filter(c => (myOrdersById[c.order] || {}).status !== 'Completed');
+    const chatsCompletedView = allCustomerChats.filter(c => (myOrdersById[c.order] || {}).status === 'Completed');
+
+    // Dedicated chat conversation drawer -- opened from a Chats-tab row or from the order
+    // drawer's Start/Go to Chat button. Mutually exclusive with the order drawer (each open
+    // handler clears the other's state) so they never stack.
+    const chatDrawerOrder = s.chatDrawerOrderId ? myOrdersById[s.chatDrawerOrderId] : null;
+    const chatDrawerChat = chatDrawerOrder ? allCustomerChats.find(c => c.order === chatDrawerOrder.id) : null;
+    const chatDrawerHasChat = !!(chatDrawerChat && chatDrawerChat.thread.length);
+    const chatDrawerVals = chatDrawerOrder ? {
+      chatDrawerOpen: true,
+      curChatOrder: {
+        id: chatDrawerOrder.id, material: chatDrawerOrder.material, qtyFmt: this.fmt(chatDrawerOrder.qty),
+        hasChat: chatDrawerHasChat, hasChatNot: !chatDrawerHasChat,
+        chatThread: chatDrawerChat ? chatDrawerChat.thread : [],
+      },
+      closeChatDrawer: () => this.setState({ chatDrawerOrderId: null, orderMsgDraft: '', orderMsgSent: false }),
+    } : { chatDrawerOpen: false, curChatOrder: {}, closeChatDrawer: () => {} };
 
     // ---------- PARTNER NETWORK / HISTORY ----------
+    // "Your Network" is meant to show every lane carrying this partner's goods (per its own
+    // on-screen caption), not just lanes where BOTH ends sit in the partner's home region --
+    // with only 12 illustrative edges total, that old both-ends rule left almost nothing to
+    // draw. Now: own-cluster hubs are the anchor, plus the far end of any lane touching them
+    // (e.g. the upstream FE fab or downstream customer node), so the partner sees their real
+    // upstream/downstream connections, not just their own region in isolation.
     const partnerCluster = d.PARTNER_CLUSTERS[s.partnerLoginId];
-    const partnerHubsAll = projected.filter(h => h.cluster === partnerCluster);
-    const partnerVisibleIds = new Set(partnerHubsAll.map(h => h.id));
+    const partnerOwnIds = new Set(projected.filter(h => h.cluster === partnerCluster).map(h => h.id));
+    const partnerConnectedEdges = d.EDGES.filter(e => hubsById[e.from] && hubsById[e.to] && (partnerOwnIds.has(e.from) || partnerOwnIds.has(e.to)));
+    const partnerVisibleIds = new Set([...partnerOwnIds, ...partnerConnectedEdges.flatMap(e => [e.from, e.to])]);
+    const partnerHubsAll = projected.filter(h => partnerVisibleIds.has(h.id));
     const partnerHubs = partnerHubsAll.map(h => ({
       ...h, labelY: h.y + h.r + 12, pulseStyle: h.isDisrupted ? 'animation:pulseRed 2s infinite' : '',
       utilPct: Math.round(h.util * 100), statusLabel: h.isDisrupted ? h.disruption : 'Normal',
       statusBg: h.isDisrupted ? '#fdecea' : '#eafaea', statusColor: h.isDisrupted ? '#b3261e' : '#1e6b28',
-      cityLabel: h.city + ', ' + h.country,
-      hoverLabel: h.id + ' — ' + h.city + ', ' + h.country,
+      isOwnHub: partnerOwnIds.has(h.id),
+      opacity: partnerOwnIds.has(h.id) ? 1 : 0.55,
+      cityLabel: h.city + ', ' + h.country + (partnerOwnIds.has(h.id) ? '' : ' (connected lane)'),
+      hoverLabel: h.id + ' — ' + h.city + ', ' + h.country + (partnerOwnIds.has(h.id) ? '' : ' — connected lane, not your own hub'),
     }));
-    const partnerEdges = d.EDGES.filter(e => hubsById[e.from] && hubsById[e.to] && partnerVisibleIds.has(e.from) && partnerVisibleIds.has(e.to)).map(e => {
+    const partnerEdges = partnerConnectedEdges.map(e => {
       const a = projected.find(h => h.id === e.from), b = projected.find(h => h.id === e.to);
       const disrupted = a.isDisrupted || b.isDisrupted || e.disrupted;
       return { x1: a.x, y1: a.y, x2: b.x, y2: b.y, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, stroke: disrupted ? 'rgba(226,0,26,.7)' : 'rgba(255,255,255,.22)', width: disrupted ? 2 : 1, dash: disrupted ? '4,3' : '', markerId: disrupted ? 'arrowhead-partner-d' : 'arrowhead-partner-n' };
@@ -1368,7 +1590,7 @@ class Component extends DCLogic {
 
     return {
       ...loginVals, isStaff, isCustomer, isPartner,
-      staffTabs, isMapTab: s.staffTab === 'map', isAlertsTab: s.staffTab === 'alerts', isTicketsTab: s.staffTab === 'tickets', isApprovalsTab: s.staffTab === 'approvals', isCommsTab: s.staffTab === 'comms',
+      staffTabs, isMapTab: s.staffTab === 'map', isAlertsTab: s.staffTab === 'alerts', isTicketsTab: s.staffTab === 'tickets', isApprovalsTab: s.staffTab === 'approvals', isCommsTab: s.staffTab === 'comms', isScenarioTab: s.staffTab === 'scenario',
       stageChips, clusterOptions, clusterFilter: s.clusterFilter, setCluster: (e) => this.setState({ clusterFilter: e.target.value }),
       disruptedOnly: s.disruptedOnly, toggleDisruptedOnly: () => this.setState({ disruptedOnly: !s.disruptedOnly }),
       disruptedOnlyBg: s.disruptedOnly ? '#f5f5f7' : 'transparent', disruptedOnlyTrackBg: s.disruptedOnly ? '#1d1d1f' : '#d2d2d7', disruptedOnlyKnobLeft: s.disruptedOnly ? '16px' : '2px',
@@ -1402,9 +1624,13 @@ class Component extends DCLogic {
       focusedOrderId: s.focusedOrderId, clearOrderFocus: () => this.setState({ focusedOrderId: null }),
       commsView, commsDrawerOpen: !!curCommsRaw, curComms, closeComms: () => this.setState({ commsDrawerId: null }), staffChatsView,
       goCustOrders: () => this.setState({ customerTab: 'orders' }), goCustSettings: () => this.setState({ customerTab: 'settings' }),
+      goCustChats: () => this.setState({ customerTab: 'chats' }),
       custOrdersTabStyle: tabBtnStyle(s.customerTab === 'orders'), custSettingsTabStyle: tabBtnStyle(s.customerTab === 'settings'),
-      custTabOrders: s.customerTab === 'orders', custTabSettings: s.customerTab === 'settings',
+      custChatsTabStyle: tabBtnStyle(s.customerTab === 'chats'),
+      custTabOrders: s.customerTab === 'orders', custTabSettings: s.customerTab === 'settings', custTabChats: s.customerTab === 'chats',
+      allCustomerChatsView: allCustomerChats, custChatsUnreadCount,
       ordersView, inProgressOrdersView, completedOrdersView, ...custOrderDrawer, customerChatsView,
+      chatsInProgressView, chatsCompletedView, ...chatDrawerVals,
       orderMsgDraft: s.orderMsgDraft || '', setOrderMsgDraft: (e) => this.setState({ orderMsgDraft: e.target.value }),
       orderMsgSent: !!s.orderMsgSent, sendOrderMsg: () => this.sendOrderMsg(),
       orderSearch: s.orderSearch, setOrderSearch: (e) => this.setState({ orderSearch: e.target.value }),
@@ -1428,11 +1654,21 @@ class Component extends DCLogic {
       historySearch: s.historySearch, setHistorySearch: (e) => this.setState({ historySearch: e.target.value }),
       ticketSearch: s.ticketSearch, setTicketSearch: (e) => this.setState({ ticketSearch: e.target.value }),
       toast: s.toast,
+      scenarioListView, scenarioListError: s.scenarioListError || s.backendHubsError, hasScenarioParams: scenarioParamRows.length > 0,
+      scenarioParamRows, scenarioError: s.scenarioError,
+      runScenarioNow: () => this.runScenarioNow(),
+      scenarioRunButtonDisabled, scenarioRunButtonStyle,
+      scenarioRunButtonLabel: s.scenarioRunning ? 'Running…' : 'Run Scenario',
+      simulationActive: !!s.scenarioRun,
+      simulationLabel: activeScenarioDef ? activeScenarioDef.label : (s.scenarioRun ? s.scenarioRun.scenario.label : ''),
+      resetScenario: () => this.resetScenario(), exitSimulation: () => this.exitSimulation(),
     };
   }
 
   openIncidentByHub(hubId) {
-    const inc = Object.values(this.state.incidents).find(i => i.hubId === hubId);
+    // Reversed so a hub affected by multiple scenario runs opens the MOST RECENT one
+    // (later insertions appear later in Object.values' insertion-order iteration).
+    const inc = Object.values(this.state.incidents).reverse().find(i => i.hubId === hubId || (i.affectedHubIds || []).includes(hubId));
     if (inc) this.setState({ drawer: inc.id, incidentTab: 'overview', staffTab: 'map', homeOrderDrawerId: null });
   }
   openIncidentById(id) { this.setState({ drawer: id, incidentTab: 'overview', staffTab: 'map', homeOrderDrawerId: null }); }
@@ -1451,6 +1687,150 @@ class Component extends DCLogic {
   }
   requestAlternative(incidentId) {
     this.showToast('Alternative recovery options requested.');
+  }
+
+  // ---------- RUN SCENARIO (backend-owned optimizer) ----------
+  selectScenario(id) {
+    // Pre-fill from the backend's real, live-computed defaults (registry.py) so the form is
+    // usable with zero typing -- still fully editable via setScenarioParam below.
+    const def = this.state.scenarioList.find(x => x.id === id);
+    const defaults = {};
+    (def ? def.parameterSchema : []).forEach(p => { if (p.default !== null && p.default !== undefined) defaults[p.name] = p.default; });
+    this.setState({ selectedScenarioId: id, scenarioParams: defaults, scenarioError: null });
+  }
+  setScenarioParam(name, value) {
+    this.setState({ scenarioParams: { ...this.state.scenarioParams, [name]: value } });
+  }
+  runScenarioNow() {
+    const s = this.state;
+    if (s.scenarioRunning || !s.selectedScenarioId) return;
+    const def = s.scenarioList.find(x => x.id === s.selectedScenarioId);
+    const isEmpty = (v) => v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
+    const missing = (def ? def.parameterSchema : []).filter(p => p.required && isEmpty(s.scenarioParams[p.name]));
+    if (missing.length) {
+      this.setState({ scenarioError: `Missing required field(s): ${missing.map(p => p.label).join(', ')}` });
+      return;
+    }
+    this.setState({ scenarioRunning: true, scenarioError: null });
+    const params = { ...s.scenarioParams };
+    if ('capacityReductionPct' in params) params.capacityReductionPct = Number(params.capacityReductionPct);
+    this.api.runScenario(s.selectedScenarioId, params).then(result => {
+      const incident = this.buildScenarioIncident(result);
+      this.setState({
+        scenarioRunning: false,
+        scenarioRun: result,
+        incidents: { ...this.state.incidents, [incident.id]: incident },
+        alerts: [{
+          id: 'AL-' + incident.id, severity: incident.severity, title: incident.title, hubId: incident.hubId,
+          exposureEur: null, time: 'just now', muted: false, linkedIncident: incident.id,
+        }, ...this.state.alerts],
+        drawer: null, incidentTab: 'overview', staffTab: 'map',
+      });
+      this.showToast(`${def ? def.label : s.selectedScenarioId} run complete — click a disrupted hub's "!" marker to view details.`);
+    }).catch(err => {
+      this.setState({ scenarioRunning: false, scenarioError: err.message || 'Scenario run failed.' });
+    });
+  }
+  resetScenario() {
+    // Reset restores Normal Operations -- re-run it explicitly rather than just clearing
+    // local state, so the map/incident panel reflect a real backend result, not a blank slate.
+    this.setState({ scenarioRunning: true });
+    this.api.runScenario('normal_operations', {}).then(result => {
+      const incident = this.buildScenarioIncident(result);
+      this.setState({
+        scenarioRunning: false, scenarioRun: null,
+        incidents: { ...this.state.incidents, [incident.id]: incident },
+        drawer: null,
+      });
+      this.showToast('Reset to Normal Operations.');
+    }).catch(err => this.setState({ scenarioRunning: false, scenarioError: err.message || 'Reset failed.' }));
+  }
+  exitSimulation() {
+    this.setState({ scenarioRun: null, drawer: null });
+  }
+  // Builds a drawer-compatible incident object from real ScenarioRunResult fields only.
+  // Fields the backend cannot honestly compute (customer names/counts, financial exposure,
+  // ETAs, CO2 per option) are left null/omitted rather than invented -- see dataQualityWarnings
+  // for why. Reuses the exact same incident-drawer shape/rendering as the static demo
+  // incidents in data.js (Overview/Impact Trace/Recovery Options tabs), per the design
+  // constraint to never introduce a second visual design for simulations.
+  buildScenarioIncident(result) {
+    const sc = result.scenario, sum = result.summary, inc = result.incident;
+    const unsolvedTotal = inc.unsolvedCount;
+    const severity = unsolvedTotal > 10 ? 'Critical' : unsolvedTotal > 0 ? 'Medium' : 'Low';
+    const avg = (rows, key) => {
+      const vals = rows.map(r => r[key]).filter(v => v !== null && v !== undefined);
+      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    };
+    const fmtAvg = v => v === null ? '—' : Math.round(v * 100) / 100;
+    // Real, derived-only figures -- never invented. "Exposure" = total real incremental cost
+    // (selected route cost minus originally-planned baseline cost, summed across affected
+    // shipments, floored at 0 per row so an improvement never offsets another row's real
+    // added cost). "Time at risk" = total real added transit days, same method. Both computed
+    // directly from the optimizer's own EffLead/Cost/baseline columns -- nothing fabricated.
+    const sumPositiveDelta = (rows, curKey, baseKey) => {
+      let total = 0, any = false;
+      rows.forEach(r => {
+        if (r[curKey] != null && r[baseKey] != null) { any = true; total += Math.max(0, r[curKey] - r[baseKey]); }
+      });
+      return any ? total : null;
+    };
+    const baseRows = result.internalAssignments;
+    const selRows = result.internalAssignments;
+    const options = baseRows.length ? [
+      {
+        id: 'baseline', name: 'Baseline (as originally planned)',
+        desc: 'Average of each affected shipment’s originally planned lane, unchanged.',
+        costEur: fmtAvg(avg(baseRows, 'baselineCost')), days: fmtAvg(avg(baseRows, 'baselineEffectiveLeadDays')),
+        risk: fmtAvg(avg(baseRows, 'baselineRisk')), co2Kg: '—', isChosen: false, isRecommended: false,
+        constraints: {},
+      },
+      {
+        id: 'selected', name: 'Selected by optimizer',
+        desc: sum.selectionChanged
+          ? 'Average of each affected shipment’s optimizer-selected replacement route for this scenario.'
+          : 'Routes are unchanged from Normal Operations -- shown under the supplementary priority-weighted lens only.',
+        costEur: fmtAvg(avg(selRows, 'cost')), days: fmtAvg(avg(selRows, 'effectiveLeadDays')),
+        risk: fmtAvg(avg(selRows, 'risk')), co2Kg: '—', isChosen: true, isRecommended: sum.selectionChanged,
+        constraints: {},
+      },
+    ] : [];
+    const trace = [
+      { stage: 'Scenario', label: sc.label, detail: `Scenario run ${result.runId}`, time: '' },
+      { stage: 'Affected hubs', label: `${result.affectedHubs.length} hub(s)`, detail: result.affectedHubs.map(h => h.hubId).join(', ') || 'None', time: '' },
+      { stage: 'Excluded/changed routes', label: `${result.affectedRoutes.length} baseline route(s) replaced`, detail: result.affectedRoutes.map(r => r.routeOptionId).join(', ') || 'None', time: '' },
+      { stage: 'Affected shipments', label: `${sum.affectedShipmentCount} shipment(s)`, detail: `${sum.internalSolvedCount}/${sum.internalTotalCount} internal solved, ${sum.externalSolvedCount}/${sum.externalTotalCount} external solved`, time: '' },
+      { stage: 'Selected alternatives', label: `${result.replacementRoutes.length} replacement route(s)`, detail: result.replacementRoutes.map(r => r.routeOptionId).join(', ') || 'None', time: '' },
+    ].map((t, i, arr) => ({ ...t, hasLine: i < arr.length - 1 }));
+    return {
+      id: result.runId, hubId: result.affectedHubs[0] ? result.affectedHubs[0].hubId : null,
+      affectedHubIds: result.affectedHubs.map(h => h.hubId),
+      title: `${sc.label} — simulation`, severity,
+      detected: (result.generatedAt || '').replace('T', ' ').slice(0, 16) || 'just now',
+      summary: `${sc.label}: ${sum.affectedShipmentCount} shipment(s) affected out of ${sum.internalTotalCount + sum.externalTotalCount} total. `
+        + `${inc.solvedCount} solved, ${inc.unsolvedCount} unsolved under this scenario.`
+        + (result.dataQualityWarnings.length ? ` ${result.dataQualityWarnings.length} data-quality note(s) apply — see below.` : ''),
+      exposureEur: sumPositiveDelta(result.internalAssignments, 'cost', 'baselineCost'),
+      exposureDays: (() => { const d2 = sumPositiveDelta(result.internalAssignments, 'effectiveLeadDays', 'baselineEffectiveLeadDays'); return d2 === null ? 'n/a' : Math.round(d2); })(),
+      ordersAtRisk: sum.affectedShipmentCount,
+      // MOCK, ILLUSTRATIVE ONLY -- per explicit request, for demo/UX purposes. The workbook
+      // has no customer field anywhere (checked all 5 sheets), so this is NOT a real backend
+      // figure like every other number in this panel -- a rough, deterministic estimate
+      // (~1 customer per 5 affected shipments) seeded on the runId so it stays stable across
+      // re-renders of the same run, labeled "(est.)" in the UI so it's never mistaken for a
+      // real computed value.
+      customersAtRisk: sum.affectedShipmentCount > 0 ? Math.max(1, Math.round(sum.affectedShipmentCount / 5)) : 0,
+      affectedShipments: result.affectedShipments.slice(0, 20).map(s2 => {
+        const row = result.internalAssignments.find(r => r.shipmentId === s2.shipmentId);
+        return {
+          id: s2.shipmentId, family: '', qty: '',
+          status: row ? (row.solved ? 'Rerouted' : 'Unsolved') : 'Unsolved',
+          lane: row && row.fromHub ? `${row.fromHub} → ${row.toHub}` : '—',
+        };
+      }),
+      trace, options,
+      dataQualityWarnings: result.dataQualityWarnings,
+    };
   }
 
   openTicket(id) { this.setState({ ticketDrawerId: id, ticketReply: '' }); }
@@ -1494,8 +1874,8 @@ class Component extends DCLogic {
   sendOrderMsg() {
     const s = this.state;
     const text = (s.orderMsgDraft || '').trim();
-    if (!text || !s.selectedOrderId) return;
-    const orderId = s.selectedOrderId;
+    if (!text || !s.chatDrawerOrderId) return;
+    const orderId = s.chatDrawerOrderId;
     const msg = { from: 'customer', text, time: new Date().toISOString().slice(0, 16).replace('T', ' ') };
     const existingComms = this.data.COMMS_DRAFTS.find(c => c.order === orderId);
     if (existingComms) {

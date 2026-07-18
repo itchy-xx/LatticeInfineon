@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./lattice-local.db"
     cors_origins: str = "http://localhost:5173"
     mock_data_path: str = "../../data/mock/supply_chain_events.mock.json"
+    infineon_data_path: str = "./data/IFX_LOG_Master_Data-anonymised_StudentVersion.xlsx"
+    mock_mode: bool = False
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     @property
     def cors_origin_list(self) -> list[str]: return [x.strip() for x in self.cors_origins.split(",")]
